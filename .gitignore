@@ -1,5 +1,5 @@
 *.cmake
-.exe
+*.exe
 Makefile
 CMakeCache.txt
 CMakeFiles
