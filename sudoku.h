@@ -18,6 +18,8 @@ struct Cell {
     u32 candidates[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
     //std::vector<u32> candidates;
     bool is_candidate(u32 candidate);
+    void fill_candidates();
+    void clear_candidates();
 };
 
 struct Sudoku {
@@ -28,16 +30,12 @@ struct Sudoku {
     void print();
     void print_candidates(u32 x, u32 y);
     void print_candidates(u32 index);
-private:
-};
-
-class Solver {
-public:
-    Solver(Sudoku sudoku);
-    Sudoku sudoku;
-    bool is_solved();
-    bool is_group_valid(u32* group);
-    // changes the candidates for all affected cells after setting!
+    // value = 0 to empty 
+    void set_candidate_all_groups(u32 x, u32 y, u32 new_entry, u32 value);
+    // value = 0 to empty 
+    void set_candidate_group(u32* group_indeces, u32 new_entry, u32 value);
+    void recompute_candidates(u32 index, u32 deleted_digit);
+    void empty_cell(u32 x, u32 y);
     bool set_cell(u32 x, u32 y, u32 digit);
     Cell get_cell(u32 x, u32 y);
 
@@ -49,10 +47,19 @@ public:
     void get_col_digits(u32 col_index, u32* col);
     void get_row_digits(u32 row_index, u32* row);
     void get_block_digits(u32 x_block, u32 y_block, u32* block);
+private:
+};
+
+class Solver {
+public:
+    Solver(Sudoku sudoku);
+    Sudoku sudoku;
+    bool is_solved();
+    bool is_group_valid(u32* group);
+    // changes the candidates for all affected cells after setting!
+
 
     void bruteforce_step();
 
 private:
-    void update_candidates(u32 x, u32 y, u32 new_entry);
-    void update_group(u32* group_indeces, u32 new_entry);
 };

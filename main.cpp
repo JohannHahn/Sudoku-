@@ -1,41 +1,86 @@
 #include "raylib/src/raylib.h"
 #include "sudoku.h"
 
+//
+
 float window_width = 900;
 float window_height = 900;
 const char* window_title = "Sudoku";
 
 Solver sudoku_solver = Solver(Sudoku());
 float cell_width = window_width / sudoku_solver.sudoku.width;
+Vector2 selected_cell = {0, 0};
+
+bool is_selected(u32 x, u32 y) {
+    return x == selected_cell.x && y == selected_cell.y;
+}
 
 void draw_cell(Rectangle boundary, const Cell& cell) {
-    DrawRectangleLinesEx(boundary, 1.f, BLACK);
+    Color border_col = BLACK;
     float font_size = boundary.height * 0.9f;
-    Vector2 digit_pos = {.x = boundary.x + boundary.width / 2.f - font_size / 4.f,
-                        .y = boundary.y + boundary.height / 2.f - font_size / 2.f};
-    if (cell.digit > 0) {
-        DrawText(TextFormat("%d", (u32)cell.digit), digit_pos.x, digit_pos.y, font_size, BLACK);
+    const char digit = '0' + cell.digit;
+    Vector2 text_size = MeasureTextEx(GetFontDefault(), &digit, font_size, 0.f);
+    Vector2 digit_pos = {.x = boundary.x + boundary.width / 2.f - text_size.x / 2.f,
+                        .y = boundary.y + boundary.height / 2.f - text_size.y / 2.f};
+
+    if (is_selected(boundary.x / cell_width, boundary.y / cell_width)) {
+        border_col = RED;
     }
-    else {
-        Vector2 candidate_pos = {boundary.x, boundary.y};
-        int candidate_width = cell_width / 3.f;
-        for (int i = 0; i < 9; ++i) {
-            if (i > 0 && i % 3 == 0) {
-                candidate_pos.y += candidate_width;
-                candidate_pos.x = boundary.x;
+    DrawRectangleLinesEx(boundary, 2.f, border_col);
+    if (cell.digit > 0) DrawText(TextFormat("%d", (u32)cell.digit), digit_pos.x, digit_pos.y, font_size, BLACK);
+
+    int candidate_width = cell_width / 3.f;
+    int c_x = boundary.x + candidate_width / 4.f; 
+    int c_y = boundary.y;
+    for (int y = 0; y < 3; ++y) {
+        for (int x = 0; x < 3; ++x) {
+            int index = INDEX(x, y, 3);
+            if (cell.candidates[index]) {
+                DrawText(TextFormat("%d", index + 1), 
+                         c_x + x * candidate_width, c_y + y * candidate_width, 
+                         font_size/3.f, DARKGRAY);
             }
-            if (cell.candidates[i]) {
-                DrawText(TextFormat("%d", i + 1), candidate_pos.x, candidate_pos.y, font_size/3.f, DARKGRAY);
-            }
-            candidate_pos.x += candidate_width;
         }
     }
 }
 
+void controls() {
+    Vector2 mouse_pos = GetMousePosition();
+    if (CheckCollisionPointRec(mouse_pos, {0, 0, window_width, window_height}) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+        selected_cell.x = (int)(mouse_pos.x / cell_width);
+        selected_cell.y = (int)(mouse_pos.y / cell_width); 
+        std::cout << "selected cell: " << selected_cell.x << ", " << selected_cell.y << "\n";
+    } 
+    for (int i = 1; i <= 9; ++i) {
+        if (IsKeyReleased(KEY_ZERO + i) || IsKeyReleased(KEY_KP_0 + i)) {
+            sudoku_solver.sudoku.set_cell(selected_cell.x, selected_cell.y, i);
+        }
+    }
+    if (IsKeyReleased(KEY_ZERO) || IsKeyReleased(KEY_DELETE)) {
+        sudoku_solver.sudoku.empty_cell(selected_cell.x, selected_cell.y);
+    }
+    if (IsKeyReleased(KEY_LEFT)) {
+        selected_cell.x -= 1.f;
+    }
+    if (IsKeyReleased(KEY_RIGHT)) {
+        selected_cell.x += 1.f;
+    }
+    if (IsKeyReleased(KEY_UP)) {
+        selected_cell.y -= 1.f;
+    }
+    if (IsKeyReleased(KEY_DOWN)) {
+        selected_cell.y += 1.f;
+    }
+    if (selected_cell.x > 8.f) selected_cell.x = 0.f;
+    if (selected_cell.x < 0.f) selected_cell.x = 8.f;
+    if (selected_cell.y > 8.f) selected_cell.y = 0.f;
+    if (selected_cell.y < 0.f) selected_cell.y = 8.f;
+}
+
 int main() {
     InitWindow(window_width, window_height, window_title);
-    for (int i = 0; i < 9*9; ++i) {
-        sudoku_solver.set_cell(i, 0, 1);
+    for (int i = 0; i < 9; ++i) {
+        sudoku_solver.sudoku.set_cell(i, 0, i + 1);
     }
     for (int i = 9; i < 18; ++i) {
         sudoku_solver.sudoku.print_candidates(i);
@@ -44,16 +89,12 @@ int main() {
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        Rectangle cell_boundary = {0, 0, cell_width, cell_width};
-        int i = 0;
-        for (const Cell& cell : sudoku_solver.sudoku.cells) {
-            draw_cell(cell_boundary, cell);
-            cell_boundary.x += cell_width;
-            if (i > 0 && i % sudoku_solver.sudoku.width == 0) {
-                cell_boundary.x = 0;
-                cell_boundary.y += cell_width;
+        controls();
+        for (int y = 0; y < window_height; y += cell_width) {
+            for (int x = 0; x < window_width; x += cell_width) {
+                Rectangle cell_bounds = {(float)x, (float)y, cell_width, cell_width};
+                draw_cell(cell_bounds, sudoku_solver.sudoku.cells[INDEX_9x9(x / (int)cell_width, y / (int)cell_width)]);
             }
-            i++;
         }
         EndDrawing();
     }

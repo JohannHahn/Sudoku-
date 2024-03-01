@@ -3,8 +3,6 @@ Sudoku solver/generator work in progress, cant do much right now
 
 TODO:
 
-  Visualize with raylib
-
-  remove digit
+  change the way candidates are updated, to fix bug when removing the digit
 
   bruteforce solver
