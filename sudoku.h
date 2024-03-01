@@ -35,7 +35,10 @@ struct Sudoku {
     // value = 0 to empty 
     void set_candidate_group(u32* group_indeces, u32 new_entry, u32 value);
     void recompute_candidates(u32 index, u32 deleted_digit);
+    // checks if other cells in the same groups 
+    // can allow the digit to be deleted as a candidate and sets it if so
     void empty_cell(u32 x, u32 y);
+    // removes the digit as candidate for all affected cells after setting!
     bool set_cell(u32 x, u32 y, u32 digit);
     Cell get_cell(u32 x, u32 y);
 
@@ -55,8 +58,8 @@ public:
     Solver(Sudoku sudoku);
     Sudoku sudoku;
     bool is_solved();
+    bool is_valid();
     bool is_group_valid(u32* group);
-    // changes the candidates for all affected cells after setting!
 
 
     void bruteforce_step();

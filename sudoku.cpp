@@ -10,6 +10,8 @@ void Solver::bruteforce_step() {
 }
 
 void Sudoku::empty_cell(u32 x, u32 y) {
+    assert(x >= 0 && x < width);
+    assert(y >= 0 && y < width);
     u32 index = INDEX_9x9(x, y); 
     Cell* cell = &cells[index];
     u32 prev = cell->digit;
@@ -28,6 +30,9 @@ void Sudoku::empty_cell(u32 x, u32 y) {
 // tries to set the cell value if input digit is a candidate
 // updates candidates for all the affected cells (rows, cols, blocks)
 bool Sudoku::set_cell(u32 x, u32 y, u32 digit) {
+    assert(x >= 0 && x < width);
+    assert(y >= 0 && y < width);
+    assert(digit > 0 && digit <= 9);
     u32 index = INDEX_9x9(x, y);
     Cell* cell = &cells[index];
     if (!cell->is_candidate(digit)) return false;
@@ -156,6 +161,16 @@ void Cell::clear_candidates() {
 }
 
 bool Solver::is_solved() {
+    u32 sum = 0;
+    for (const Cell& cell : sudoku.cells) {
+        for (u32 candidate : cell.candidates) {
+            sum += candidate; 
+        }
+    }
+    return sum == 0;
+}
+
+bool Solver::is_valid() {
     //lines
     for (int i = 0; i < sudoku.width; ++i) {
         u32 line[sudoku.width] = {0};
@@ -181,8 +196,8 @@ bool Solver::is_solved() {
 bool Solver::is_group_valid(u32* group) {
     for (int i = 0; i < sudoku.width; ++i) {
         int elem = group[i];
-        for (int j = i; j < sudoku.width; ++j) {
-            if (elem == group[j] || elem == 0) {
+        for (int j = 0; j < sudoku.width; ++j) {
+            if (i != j && elem == group[j] || elem == 0) {
                 return false;
             }
         }

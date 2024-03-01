@@ -17,6 +17,7 @@ bool is_selected(u32 x, u32 y) {
 
 void draw_cell(Rectangle boundary, const Cell& cell) {
     Color border_col = BLACK;
+    float border_thicc = 1.f;
     float font_size = boundary.height * 0.9f;
     const char digit = '0' + cell.digit;
     Vector2 text_size = MeasureTextEx(GetFontDefault(), &digit, font_size, 0.f);
@@ -25,8 +26,10 @@ void draw_cell(Rectangle boundary, const Cell& cell) {
 
     if (is_selected(boundary.x / cell_width, boundary.y / cell_width)) {
         border_col = RED;
+        border_thicc = 2.f;
+        DrawRectangleRec(boundary, ColorAlpha(GREEN, 0.5f));
     }
-    DrawRectangleLinesEx(boundary, 2.f, border_col);
+    DrawRectangleLinesEx(boundary, border_thicc, border_col);
     if (cell.digit > 0) DrawText(TextFormat("%d", (u32)cell.digit), digit_pos.x, digit_pos.y, font_size, BLACK);
 
     int candidate_width = cell_width / 3.f;
@@ -49,7 +52,6 @@ void controls() {
     if (CheckCollisionPointRec(mouse_pos, {0, 0, window_width, window_height}) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
         selected_cell.x = (int)(mouse_pos.x / cell_width);
         selected_cell.y = (int)(mouse_pos.y / cell_width); 
-        std::cout << "selected cell: " << selected_cell.x << ", " << selected_cell.y << "\n";
     } 
     for (int i = 1; i <= 9; ++i) {
         if (IsKeyReleased(KEY_ZERO + i) || IsKeyReleased(KEY_KP_0 + i)) {
@@ -59,16 +61,16 @@ void controls() {
     if (IsKeyReleased(KEY_ZERO) || IsKeyReleased(KEY_DELETE)) {
         sudoku_solver.sudoku.empty_cell(selected_cell.x, selected_cell.y);
     }
-    if (IsKeyReleased(KEY_LEFT)) {
+    if (IsKeyDown(KEY_LEFT)) {
         selected_cell.x -= 1.f;
     }
-    if (IsKeyReleased(KEY_RIGHT)) {
+    if (IsKeyPressed(KEY_RIGHT)) {
         selected_cell.x += 1.f;
     }
-    if (IsKeyReleased(KEY_UP)) {
+    if (IsKeyPressed(KEY_UP)) {
         selected_cell.y -= 1.f;
     }
-    if (IsKeyReleased(KEY_DOWN)) {
+    if (IsKeyPressed(KEY_DOWN)) {
         selected_cell.y += 1.f;
     }
     if (selected_cell.x > 8.f) selected_cell.x = 0.f;
@@ -78,14 +80,26 @@ void controls() {
 }
 
 int main() {
+    SetRandomSeed(GetTime());
     InitWindow(window_width, window_height, window_title);
-    for (int i = 0; i < 9; ++i) {
-        sudoku_solver.sudoku.set_cell(i, 0, i + 1);
+    int count = 0;
+    while (!sudoku_solver.is_solved()) {
+        int x = GetRandomValue(0, 8);
+        int y = GetRandomValue(0, 8);
+        for (int digit = 1; digit <= 9; ++digit) {
+            if (sudoku_solver.sudoku.set_cell(x, y, digit)) {
+                continue;
+            } 
+        } 
+        count++;
+        if (count == 81) {
+            count = 0;
+            if (x + 1 < 9) sudoku_solver.sudoku.empty_cell(x + 1, y);
+            if (x - 1 >= 0) sudoku_solver.sudoku.empty_cell(x - 1, y);
+            if (y + 1 < 9) sudoku_solver.sudoku.empty_cell(x, y + 1);
+            if (y - 1 >= 0) sudoku_solver.sudoku.empty_cell(x, y - 1);
+        }
     }
-    for (int i = 9; i < 18; ++i) {
-        sudoku_solver.sudoku.print_candidates(i);
-    }
-    std::cout << (sudoku_solver.is_solved() ? "sudoku is solved\n" : "sudoku is not solved\n");
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -98,5 +112,7 @@ int main() {
         }
         EndDrawing();
     }
+    std::cout << (sudoku_solver.is_solved() ? "sudoku is solved\n" : "sudoku is not solved\n");
+    std::cout << (sudoku_solver.is_valid() ? "sudoku is alo valid\n" : "sudoku is not valid\n");
     return 0;
 }
