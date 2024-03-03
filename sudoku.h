@@ -34,7 +34,7 @@ struct Sudoku {
     void set_candidate_all_groups(u32 x, u32 y, u32 new_entry, u32 value);
     // value = 0 to empty 
     void set_candidate_group(u32* group_indeces, u32 new_entry, u32 value);
-    void recompute_candidates(u32 x, u32 y,  u32 deleted_digit);
+    void recompute_candidates(u32 x, u32 y, u32 deleted_digit);
     // checks if other cells in the same groups 
     // can allow the digit to be deleted as a candidate and sets it if so
     void empty_cell(u32 x, u32 y);

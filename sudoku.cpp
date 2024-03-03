@@ -170,7 +170,7 @@ bool Solver::is_solved() {
             sum += candidate; 
         }
     }
-    return sum == 0;
+    return sum == 0 && is_valid();
 }
 
 bool Solver::is_valid() {
