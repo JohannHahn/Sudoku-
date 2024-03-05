@@ -58,6 +58,7 @@ public:
     Solver(Sudoku sudoku);
     Sudoku sudoku;
     bool is_solved();
+    bool no_candidates();
     bool is_valid();
     bool is_group_valid(u32* group);
 

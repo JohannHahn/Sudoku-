@@ -160,7 +160,7 @@ void Cell::clear_candidates() {
     }
 }
 
-bool Solver::is_solved() {
+bool Solver::no_candidates() {
     u32 sum = 0;
     for (const Cell& cell : sudoku.cells) {
         for (u32 candidate : cell.candidates) {
@@ -168,6 +168,10 @@ bool Solver::is_solved() {
         }
     }
     return sum == 0;
+}
+
+bool Sover::is_solved {
+    return is_valid() && no_candidates();
 }
 
 bool Solver::is_valid() {

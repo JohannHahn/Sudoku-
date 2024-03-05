@@ -18,7 +18,7 @@ bool is_selected(u32 x, u32 y) {
 void draw_cell(Rectangle boundary, const Cell& cell) {
     Color border_col = BLACK;
     float border_thicc = 1.f;
-    float font_size = boundary.height * 0.9f;
+    float font_size = boundary.height * 0.7f;
     const char digit = '0' + cell.digit;
     Vector2 text_size = MeasureTextEx(GetFontDefault(), &digit, font_size, 0.f);
     Vector2 digit_pos = {.x = boundary.x + boundary.width / 2.f - text_size.x / 2.f,
@@ -33,7 +33,7 @@ void draw_cell(Rectangle boundary, const Cell& cell) {
     if (cell.digit > 0) DrawText(TextFormat("%d", (u32)cell.digit), digit_pos.x, digit_pos.y, font_size, BLACK);
 
     int candidate_width = cell_width / 3.f;
-    int c_x = boundary.x + candidate_width / 4.f; 
+    int c_x = boundary.x + candidate_width / 3.f; 
     int c_y = boundary.y;
     for (int y = 0; y < 3; ++y) {
         for (int x = 0; x < 3; ++x) {
@@ -58,7 +58,7 @@ void controls() {
             sudoku_solver.sudoku.set_cell(selected_cell.x, selected_cell.y, i);
         }
     }
-    if (IsKeyReleased(KEY_ZERO) || IsKeyReleased(KEY_DELETE)) {
+    if (IsKeyReleased(KEY_ZERO) || IsKeyReleased(KEY_DELETE) || IsKeyReleased(KEY_KP_0)) {
         sudoku_solver.sudoku.empty_cell(selected_cell.x, selected_cell.y);
     }
     if (IsKeyDown(KEY_LEFT)) {
