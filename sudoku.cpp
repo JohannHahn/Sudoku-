@@ -17,14 +17,18 @@ void Sudoku::empty_cell(u32 x, u32 y) {
     u32 prev = cell->digit;
     if (prev == 0) return;
     cell->digit = 0;
-    u32 groups[GROUP_MAX][width] = {0};
-    get_row_indeces(y, groups[ROW]);
-    get_col_indeces(x, groups[COL]);
-    get_block_indeces(x / block_size, y / block_size, groups[BLOCK]);
-    for (int i = 0; i < GROUP_MAX; ++i) {
-        for (int j = 0; j < width; ++j) {
-            recompute_candidates(groups[i][j], prev);
+
+    u32 x_block = x / block_size;
+    u32 y_block = y / block_size - 1;
+    for (int i = 0; i < width; ++i) {
+        recompute_candidates(i, y, prev);
+        recompute_candidates(x, i, prev);
+        x_block += i;
+        if (i % block_size == 0) {
+            x_block = 0;
+            y_block++;
         }
+        recompute_candidates(x_block, y_block, prev);
     }
 }
 // tries to set the cell value if input digit is a candidate
@@ -65,10 +69,9 @@ void Sudoku::set_candidate_all_groups(u32 x, u32 y, u32 new_entry, u32 value) {
     }
 }
 
-void Sudoku::recompute_candidates(u32 index, u32 deleted_digit) {
+void Sudoku::recompute_candidates(u32 x, u32 y,  u32 deleted_digit) {
     assert(deleted_digit > 0 && deleted_digit <= 9);
-    u32 x = index % width;
-    u32 y = index / width;
+    u32 index = INDEX_9x9(x, y);
     u32 groups[GROUP_MAX][width] = {0};
     get_row_indeces(y, groups[ROW]);
     get_col_indeces(x, groups[COL]);
@@ -102,8 +105,8 @@ void Sudoku::get_col_indeces(u32 col_index, u32* col) {
 }
 
 void Sudoku::get_block_indeces_cell(u32 x, u32 y, u32* block) {
-    int start_y = y / block_size;
     int start_x = x / block_size;
+    int start_y = y / block_size;
     int i = 0;
     for (int y = 0; y < block_size; ++y) {
         for (int x = 0; x < block_size ; ++x) {
@@ -167,7 +170,7 @@ bool Solver::no_candidates() {
             sum += candidate; 
         }
     }
-    return sum == 0;
+    return sum == 0 && is_valid();
 }
 
 bool Sover::is_solved {

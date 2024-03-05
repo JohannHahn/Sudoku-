@@ -112,7 +112,5 @@ int main() {
         }
         EndDrawing();
     }
-    std::cout << (sudoku_solver.is_solved() ? "sudoku is solved\n" : "sudoku is not solved\n");
-    std::cout << (sudoku_solver.is_valid() ? "sudoku is alo valid\n" : "sudoku is not valid\n");
     return 0;
 }
