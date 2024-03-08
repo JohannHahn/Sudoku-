@@ -16,7 +16,6 @@ enum group {
 struct Cell {	
     u32 digit = 0;
     u32 candidates[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-    //std::vector<u32> candidates;
     bool is_candidate(u32 candidate);
     void fill_candidates();
     void clear_candidates();
@@ -38,8 +37,10 @@ struct Sudoku {
     // checks if other cells in the same groups 
     // can allow the digit to be deleted as a candidate and sets it if so
     void empty_cell(u32 x, u32 y);
+    void empty_cell(u32 index);
     // removes the digit as candidate for all affected cells after setting!
     bool set_cell(u32 x, u32 y, u32 digit);
+    bool set_cell(u32 index, u32 digit);
     Cell get_cell(u32 x, u32 y);
 
     void get_col_indeces(u32 col_index, u32* col);
@@ -50,20 +51,23 @@ struct Sudoku {
     void get_col_digits(u32 col_index, u32* col);
     void get_row_digits(u32 row_index, u32* row);
     void get_block_digits(u32 x_block, u32 y_block, u32* block);
+    std::vector<u32> find_cells_by_candidates(u32 num_candidates);
+    bool no_candidates();
+    bool is_solved();
+    bool is_valid();
+    bool is_group_valid(u32* group);
+    void fill_upto(u32 num_cells);
+    u32 get_lowest_candidates();
+
 private:
+    u32 lowest_candidates = 9;
 };
 
 class Solver {
 public:
-    Solver(Sudoku sudoku);
-    Sudoku sudoku;
-    bool is_solved();
-    bool no_candidates();
-    bool is_valid();
-    bool is_group_valid(u32* group);
-
-
-    void bruteforce_step();
-
+    Solver();
+    void bruteforce_step(Sudoku& sudoku);
+    bool one_candidate(Sudoku& sudoku);
 private:
+
 };

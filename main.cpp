@@ -7,8 +7,9 @@ float window_width = 900;
 float window_height = 900;
 const char* window_title = "Sudoku";
 
-Solver sudoku_solver = Solver(Sudoku());
-float cell_width = window_width / sudoku_solver.sudoku.width;
+Solver sudoku_solver = Solver();
+Sudoku sudoku;
+float cell_width = window_width / sudoku.width;
 Vector2 selected_cell = {0, 0};
 
 bool is_selected(u32 x, u32 y) {
@@ -48,6 +49,9 @@ void draw_cell(Rectangle boundary, const Cell& cell) {
 }
 
 void controls() {
+    if (IsKeyReleased(KEY_R)) {
+        //sudoku.fill_upto(81 / 1.5f);
+    }
     Vector2 mouse_pos = GetMousePosition();
     if (CheckCollisionPointRec(mouse_pos, {0, 0, window_width, window_height}) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
         selected_cell.x = (int)(mouse_pos.x / cell_width);
@@ -55,11 +59,11 @@ void controls() {
     } 
     for (int i = 1; i <= 9; ++i) {
         if (IsKeyReleased(KEY_ZERO + i) || IsKeyReleased(KEY_KP_0 + i)) {
-            sudoku_solver.sudoku.set_cell(selected_cell.x, selected_cell.y, i);
+            sudoku.set_cell(selected_cell.x, selected_cell.y, i);
         }
     }
     if (IsKeyReleased(KEY_ZERO) || IsKeyReleased(KEY_DELETE) || IsKeyReleased(KEY_KP_0)) {
-        sudoku_solver.sudoku.empty_cell(selected_cell.x, selected_cell.y);
+        sudoku.empty_cell(selected_cell.x, selected_cell.y);
     }
     if (IsKeyDown(KEY_LEFT)) {
         selected_cell.x -= 1.f;
@@ -82,24 +86,10 @@ void controls() {
 int main() {
     SetRandomSeed(GetTime());
     InitWindow(window_width, window_height, window_title);
-    int count = 0;
-    while (!sudoku_solver.is_solved()) {
-        int x = GetRandomValue(0, 8);
-        int y = GetRandomValue(0, 8);
-        for (int digit = 1; digit <= 9; ++digit) {
-            if (sudoku_solver.sudoku.set_cell(x, y, digit)) {
-                continue;
-            } 
-        } 
-        count++;
-        if (count == 81) {
-            count = 0;
-            if (x + 1 < 9) sudoku_solver.sudoku.empty_cell(x + 1, y);
-            if (x - 1 >= 0) sudoku_solver.sudoku.empty_cell(x - 1, y);
-            if (y + 1 < 9) sudoku_solver.sudoku.empty_cell(x, y + 1);
-            if (y - 1 >= 0) sudoku_solver.sudoku.empty_cell(x, y - 1);
-        }
-    }
+
+    sudoku.fill_upto(81.f / 1.2f);
+    sudoku_solver.one_candidate(sudoku);
+
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -107,7 +97,7 @@ int main() {
         for (int y = 0; y < window_height; y += cell_width) {
             for (int x = 0; x < window_width; x += cell_width) {
                 Rectangle cell_bounds = {(float)x, (float)y, cell_width, cell_width};
-                draw_cell(cell_bounds, sudoku_solver.sudoku.cells[INDEX_9x9(x / (int)cell_width, y / (int)cell_width)]);
+                draw_cell(cell_bounds, sudoku.cells[INDEX_9x9(x / (int)cell_width, y / (int)cell_width)]);
             }
         }
         EndDrawing();
