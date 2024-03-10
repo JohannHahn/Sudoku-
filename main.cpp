@@ -87,8 +87,11 @@ int main() {
     SetRandomSeed(GetTime());
     InitWindow(window_width, window_height, window_title);
 
-    sudoku.fill_upto(81.f / 1.2f);
-    sudoku_solver.one_candidate(sudoku);
+    sudoku.fill_upto(81);
+    Sudoku s = sudoku;
+    if (sudoku_solver.one_candidate(s)) {
+        std::cout << "sudoku is solvable with one candidate rule\n";
+    }
 
     while (!WindowShouldClose()) {
         BeginDrawing();
