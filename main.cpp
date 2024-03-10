@@ -12,6 +12,8 @@ Sudoku sudoku;
 float cell_width = window_width / sudoku.width;
 Vector2 selected_cell = {0, 0};
 
+bool not_found = true;
+
 bool is_selected(u32 x, u32 y) {
     return x == selected_cell.x && y == selected_cell.y;
 }
@@ -49,8 +51,10 @@ void draw_cell(Rectangle boundary, const Cell& cell) {
 }
 
 void controls() {
-    if (IsKeyReleased(KEY_R)) {
-        //sudoku.fill_upto(81 / 1.5f);
+    if (IsKeyDown(KEY_R) && not_found) {
+        sudoku.fill_upto(30);
+        not_found = !sudoku_solver.one_candidate(sudoku);
+        if (!not_found) std::cout << sudoku.is_solved() << "\n";
     }
     Vector2 mouse_pos = GetMousePosition();
     if (CheckCollisionPointRec(mouse_pos, {0, 0, window_width, window_height}) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
@@ -87,11 +91,8 @@ int main() {
     SetRandomSeed(GetTime());
     InitWindow(window_width, window_height, window_title);
 
-    sudoku.fill_upto(81);
-    Sudoku s = sudoku;
-    if (sudoku_solver.one_candidate(s)) {
-        std::cout << "sudoku is solvable with one candidate rule\n";
-    }
+    sudoku.fill_upto(42);
+    sudoku_solver.one_candidate(sudoku);
 
     while (!WindowShouldClose()) {
         BeginDrawing();

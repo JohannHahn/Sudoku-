@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <string>
 
 int random(int max) {
     return rand() % max;
@@ -27,46 +28,18 @@ void Solver::bruteforce_step(Sudoku& sudoku) {
     // random
 }
 
-bool Solver::one_candidate(Sudoku& sudoku) {
+u32 Solver::one_candidate(Sudoku& sudoku) {
     if (sudoku.is_solved()) return true;
-    //std::cout << "not solved yet: \n";
-    //sudoku.print();
+    std::vector<std::pair<u32, u32>> one_candidate_cells = sudoku.find_cells_one_candidate();
+    if (one_candidate_cells.size() == 0) return false;
 
-    std::vector<u32> one_candidate_cells = sudoku.find_cells_by_candidates(1);
-    if (one_candidate_cells.size() == 0) {
-        std::cout << "sudoku became unsolvable\n";
-        return false;
+    u32 index = one_candidate_cells[0].first;
+    u32 digit = one_candidate_cells[0].second;
+    if (!sudoku.set_cell(index, digit)) {
+        assert(0 && "could not set cell after calculating that you could set the cell :/\n");
     }
-    else {
-        std::cout << "\n";
-        for (u32 index : one_candidate_cells) {
-            assert(sudoku.cells[index].digit == 0);
-            u32 candidate = 0;
-            for (u32 c = 1; candidate != c && c <= 9; ++c) {
-                if (sudoku.cells[index].is_candidate(c)) {
-                    candidate = c;
-                    break;
-                }
-            } 
-            assert(candidate != 0);
-            if (!sudoku.set_cell(index, candidate)) {
-                std::cout << "could not set cell\n";
-                u32 x = index % sudoku.width;
-                u32 y = index / sudoku.width;
-                std::cout << "x = " << x << ", y = " << y << "\n";
-                std::cout << "index = " << index << ", candidate = " << candidate << "\n";
-                std::cout << "cell at index = " << sudoku.cells[index].digit << "\n";
-                std::cout << sudoku.cells[index].is_candidate(candidate) << "\n";
-                assert (0);
-            } 
-            Sudoku s = sudoku;
-            if (one_candidate(s)) {
-                return true;
-            }
-            sudoku.empty_cell(index);
-        } 
-        return false;
-    }
+    return one_candidate(sudoku);
+    
 }
 
 void Sudoku::empty_cell(u32 index) {
@@ -109,7 +82,10 @@ bool Sudoku::set_cell(u32 x, u32 y, u32 digit) {
     assert(digit > 0 && digit <= 9);
     u32 index = INDEX_9x9(x, y);
     Cell* cell = &cells[index];
-    if (!cell->is_candidate(digit)) return false;
+    if (!cell->is_candidate(digit)) {
+        //std::cout << "candidate " << digit << " is not a candidate for cell " << x << ", " << y << "\n";
+        return false;
+    }
     empty_cell(x, y);
     cell->digit = digit;
     // delete digit from the candidates of cells in the same groups 
@@ -245,24 +221,62 @@ void Sudoku::fill_upto(u32 num_cells) {
     while (i < num_cells) {
         int index = random(indeces.size() - 1);
         assert(index >= 0 && index < indeces.size());
-        remove_elem<u32>(indeces, index);
         int digit = random(9) + 1;
         assert (digit > 0 && digit <= 9);
-        set_cell(index, digit);
-        i++;
+        if (cells[index].digit == 0 && set_cell(index, digit)) { 
+            i++;
+            remove_elem<u32>(indeces, index);
+        }
     }
 }
 
-std::vector<u32> Sudoku::find_cells_by_candidates(u32 num_candidates) {
+std::vector<std::pair<u32, u32>> Sudoku::find_cells_one_candidate() {
+    std::vector<std::pair<u32, u32>> result;
+    for (u32 i = 0; i < width * width; ++i) { 
+        if (cells[i].digit != 0) continue;
+        u32 count = 0;
+        u32 set_candidate = 0;
+        u32 c_i = 0;
+        for (u32 candidate : cells[i].candidates) {
+            if (candidate > 0) {
+                count++;
+                set_candidate = c_i + 1;
+            }
+            c_i++;
+        }
+        if (count == 1) {
+            result.push_back({i, set_candidate});
+        }
+    }
+    return result;
+}
+
+std::vector<u32> Sudoku::find_cells_by_candidates(u32 num_candidates, std::string& info) {
     std::vector<u32> result = {};
 
     for (u32 i = 0; i < width * width; ++i) {
-        u32 local_num_c = 0;
         if (cells[i].digit != 0) continue;
-        for (u32 j = 0; j < width; ++j) {
-            if (cells[i].candidates[j] > 0) local_num_c++;
+        u32 local_num_c = 0;
+        for (u32 candidate : cells[i].candidates) {
+            if (candidate > 0) local_num_c++;
         }
-        if (local_num_c == num_candidates) result.push_back(i);
+        if (local_num_c == num_candidates) {
+            result.push_back(i);
+            
+        }
+    }
+    for (u32 i : result) {
+        u32 nc = 0;
+        info += "found index = "; info += std::to_string(i); info += " with "; info += std::to_string(num_candidates); info += " candidates\n";
+        for (u32 candidate : cells[i].candidates) {
+            info += std::to_string(candidate) + " ";
+            if (candidate > 0) nc++;
+        }
+        info += "\n";
+        if (nc != num_candidates) {
+            info += "nc = " + std::to_string(nc) + ", num_candidates = " + std::to_string(num_candidates) + "\n";
+        }
+        assert(nc == num_candidates);
     }
     return result;
 }
@@ -279,7 +293,7 @@ bool Sudoku::no_candidates() {
             sum += candidate; 
         }
     }
-    return sum == 0 && is_valid();
+    return sum == 0;
 }
 
 bool Sudoku::is_solved() {
@@ -336,16 +350,19 @@ void Sudoku::print() {
 
 void Sudoku::print_candidates(u32 x, u32 y) {
     u32 index = INDEX_9x9(x, y);
-    std::cout << "x = " << x << ", y = " << y << "\n";
     print_candidates(index);
 }
 
 void Sudoku::print_candidates(u32 index) {
     std::cout << "candidates for cell at index = " << index << "\n";
+    u32 x = index % width;
+    u32 y = index / width;
+    std::cout << "x = " << x << ", y = " << y << "\n";
     std::cout << "[";
-    for (int i = 0; i < 9; ++i) {
-        u32 candidate = cells[index].candidates[i];
+    int i = 0;
+    for (u32 candidate : cells[index].candidates) {
         if (candidate) std::cout << i + 1 << ", ";
+        i++;
     }
     std::cout << "]\n";
 }

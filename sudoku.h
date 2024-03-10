@@ -51,7 +51,8 @@ struct Sudoku {
     void get_col_digits(u32 col_index, u32* col);
     void get_row_digits(u32 row_index, u32* row);
     void get_block_digits(u32 x_block, u32 y_block, u32* block);
-    std::vector<u32> find_cells_by_candidates(u32 num_candidates);
+    std::vector<u32> find_cells_by_candidates(u32 num_candidates, std::string& info);
+    std::vector<std::pair<u32, u32>> find_cells_one_candidate();
     bool no_candidates();
     bool is_solved();
     bool is_valid();
@@ -67,7 +68,8 @@ class Solver {
 public:
     Solver();
     void bruteforce_step(Sudoku& sudoku);
-    bool one_candidate(Sudoku& sudoku);
+    // return number of sulutions
+    u32 one_candidate(Sudoku& sudoku);
 private:
 
 };
