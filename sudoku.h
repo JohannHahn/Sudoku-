@@ -38,6 +38,7 @@ struct Sudoku {
     // can allow the digit to be deleted as a candidate and sets it if so
     void empty_cell(u32 x, u32 y);
     void empty_cell(u32 index);
+    void clear_cells();
     // removes the digit as candidate for all affected cells after setting!
     bool set_cell(u32 x, u32 y, u32 digit);
     bool set_cell(u32 index, u32 digit);

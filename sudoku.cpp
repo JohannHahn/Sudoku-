@@ -42,6 +42,10 @@ u32 Solver::one_candidate(Sudoku& sudoku) {
     
 }
 
+void Sudoku::clear_cells() {
+    *this = Sudoku();
+}
+
 void Sudoku::empty_cell(u32 index) {
     empty_cell(index % width, index / width);
 }
@@ -54,17 +58,16 @@ void Sudoku::empty_cell(u32 x, u32 y) {
     if (prev == 0) return;
     cell->digit = 0;
 
-    u32 x_block = x / block_size;
-    u32 y_block = y / block_size - 1;
+    u32 x_block_start = x / block_size;
+    u32 y_block_start = y / block_size;
+    for (int y_block = 0; y_block < block_size; ++y_block) {
+        for (int x_block = 0; x_block < block_size; ++x_block) {
+            recompute_candidates(x_block_start + x_block, y_block_start + y_block, prev);  
+        }
+    }
     for (int i = 0; i < width; ++i) {
         recompute_candidates(i, y, prev);
         recompute_candidates(x, i, prev);
-        x_block += i;
-        if (i % block_size == 0) {
-            x_block = 0;
-            y_block++;
-        }
-        recompute_candidates(x_block, y_block, prev);
     }
 }
 // tries to set the cell value if input digit is a candidate
@@ -210,8 +213,7 @@ void Cell::clear_candidates() {
 }
 
 void Sudoku::fill_upto(u32 num_cells) {
-    // emtpy
-    *this = Sudoku(); 
+    clear_cells();
     std::vector<u32> indeces = {0};
     u32 size = width * width;
     for (int i = 0; i < size; ++i) {

@@ -51,6 +51,9 @@ void draw_cell(Rectangle boundary, const Cell& cell) {
 }
 
 void controls() {
+    if (IsKeyReleased(KEY_O)) {
+        sudoku.clear_cells();
+    }
     if (IsKeyDown(KEY_R) && not_found) {
         sudoku.fill_upto(30);
         not_found = !sudoku_solver.one_candidate(sudoku);
