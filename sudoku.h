@@ -17,12 +17,14 @@ struct Cell {
     u32 digit = 0;
     u32 candidates[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
     bool is_candidate(u32 candidate);
+    bool no_candidates();
     void fill_candidates();
     void clear_candidates();
 };
 
 struct Sudoku {
     static constexpr u32 width = 9;
+    static constexpr u32 size = width * width;
     static constexpr u32 block_size = width / 3;
     static constexpr u32 block_count = width;
     Cell cells[width * width];
@@ -62,15 +64,17 @@ struct Sudoku {
     u32 get_lowest_candidates();
 
 private:
-    u32 lowest_candidates = 9;
+    u32 lowest_candidates = width;
 };
 
 class Solver {
 public:
     Solver();
     void bruteforce_step(Sudoku& sudoku);
+    u32 backtrack(Sudoku& sudoku, u32 start = 0);
     // return number of sulutions
     u32 one_candidate(Sudoku& sudoku);
+    Sudoku get_full_grid();
 private:
 
 };

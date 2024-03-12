@@ -94,9 +94,13 @@ int main() {
     SetRandomSeed(GetTime());
     InitWindow(window_width, window_height, window_title);
 
-    sudoku.fill_upto(42);
-    sudoku_solver.one_candidate(sudoku);
-
+    bool solution_found = false;
+    while (!solution_found) {
+        sudoku.fill_upto(30);
+        solution_found = sudoku_solver.backtrack(sudoku);
+        sudoku.clear_cells();
+    }
+    
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(RAYWHITE);
