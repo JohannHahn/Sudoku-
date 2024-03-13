@@ -2,11 +2,11 @@
 #include "sudoku.h"
 #include <map>
 
-//
-
 float window_width = 900;
 float window_height = 900;
 const char* window_title = "Sudoku";
+double start = 0.f;
+double delta = 0.f;
 
 Solver sudoku_solver = Solver();
 Sudoku sudoku;
@@ -15,6 +15,16 @@ Vector2 selected_cell = {0, 0};
 
 bool not_found = true;
 
+
+typedef std::vector<std::pair<u32, u32>> Points;
+
+void time_begin() {
+    start = GetTime();
+}
+void time_end() {
+    delta = GetTime() - start;
+    std::cout << "took " << delta << "s\n";
+}
 bool is_selected(u32 x, u32 y) {
     return x == selected_cell.x && y == selected_cell.y;
 }
@@ -55,10 +65,11 @@ void controls() {
     if (IsKeyReleased(KEY_O)) {
         sudoku.clear_cells();
     }
-    if (IsKeyDown(KEY_R) && not_found) {
-        sudoku.fill_upto(30);
-        not_found = !sudoku_solver.one_candidate(sudoku);
-        if (!not_found) std::cout << sudoku.is_solved() << "\n";
+    if (IsKeyReleased(KEY_R) && not_found) {
+        time_begin();
+        sudoku = Sudoku();
+        sudoku_solver.backtrack(sudoku);
+        time_end();
     }
     Vector2 mouse_pos = GetMousePosition();
     if (CheckCollisionPointRec(mouse_pos, {0, 0, window_width, window_height}) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
@@ -73,7 +84,7 @@ void controls() {
     if (IsKeyReleased(KEY_ZERO) || IsKeyReleased(KEY_DELETE) || IsKeyReleased(KEY_KP_0)) {
         sudoku.empty_cell(selected_cell.x, selected_cell.y);
     }
-    if (IsKeyDown(KEY_LEFT)) {
+    if (IsKeyPressed(KEY_LEFT)) {
         selected_cell.x -= 1.f;
     }
     if (IsKeyPressed(KEY_RIGHT)) {
@@ -90,8 +101,6 @@ void controls() {
     if (selected_cell.y > 8.f) selected_cell.y = 0.f;
     if (selected_cell.y < 0.f) selected_cell.y = 8.f;
 }
-
-typedef std::vector<std::pair<u32, u32>> Points;
 
 int main() {
     SetRandomSeed(GetTime());
@@ -110,11 +119,6 @@ int main() {
             u32 y = point.second;
             std::cout << "x = " << x << ", y = " << y << "\n";
         }
-    }
-    while (!solution_found) {
-        sudoku.clear_cells();
-        sudoku.fill_upto(20);
-        solution_found = sudoku_solver.backtrack(sudoku);
     }
     
     while (!WindowShouldClose()) {

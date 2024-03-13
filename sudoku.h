@@ -23,11 +23,13 @@ struct Cell {
 };
 
 struct Sudoku {
+    Sudoku();
     static constexpr u32 width = 9;
     static constexpr u32 size = width * width;
     static constexpr u32 block_size = width / 3;
     static constexpr u32 block_count = width;
-    Cell cells[width * width];
+    Cell cells[size];
+    std::vector<u32> empty_cells;
     void print();
     void print_candidates(u32 x, u32 y);
     void print_candidates(u32 index);
@@ -61,22 +63,17 @@ struct Sudoku {
     bool is_solved();
     bool is_valid();
     bool is_group_valid(u32* group);
-    void fill_upto(u32 num_cells);
-    u32 get_lowest_candidates();
-
-
+    static int random(int max);
 private:
-    u32 lowest_candidates = width;
+    u32 random_start;
 };
 
-class Solver {
+struct Solver {
 public:
     Solver();
-    void bruteforce_step(Sudoku& sudoku);
-    u32 backtrack(Sudoku& sudoku);
+    bool backtrack(Sudoku& sudoku);
     // return number of sulutions
     u32 one_candidate(Sudoku& sudoku);
-    Sudoku get_full_grid();
 private:
 
 };
