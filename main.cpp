@@ -1,5 +1,6 @@
 #include "raylib/src/raylib.h"
 #include "sudoku.h"
+#include <map>
 
 //
 
@@ -90,15 +91,30 @@ void controls() {
     if (selected_cell.y < 0.f) selected_cell.y = 8.f;
 }
 
+typedef std::vector<std::pair<u32, u32>> Points;
+
 int main() {
     SetRandomSeed(GetTime());
     InitWindow(window_width, window_height, window_title);
 
     bool solution_found = false;
+    std::map<u32, Points> map;
+    map[2] = {{0, 0}};
+    map[4] = {{0, 0}};
+    map[3] = {{0, 0}};
+    map[0] = {{0, 0}};
+    for (auto keyval : map) {
+        std::cout << "cells with " << keyval.first << " candidates left\n"; 
+        for (auto point : keyval.second) {
+            u32 x = point.first;
+            u32 y = point.second;
+            std::cout << "x = " << x << ", y = " << y << "\n";
+        }
+    }
     while (!solution_found) {
-        sudoku.fill_upto(30);
-        solution_found = sudoku_solver.backtrack(sudoku);
         sudoku.clear_cells();
+        sudoku.fill_upto(20);
+        solution_found = sudoku_solver.backtrack(sudoku);
     }
     
     while (!WindowShouldClose()) {

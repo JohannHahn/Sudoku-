@@ -232,6 +232,7 @@ std::vector<std::pair<u32, u32>> Sudoku::find_cells_one_candidate() {
                 count++;
                 set_candidate = c_i + 1;
             }
+            if (count > 1) break;
             c_i++;
         }
         if (count == 1) {
@@ -241,10 +242,20 @@ std::vector<std::pair<u32, u32>> Sudoku::find_cells_one_candidate() {
     return result;
 }
 
+bool Sudoku::find_cell_empty(u32& index_out) {
+    for (int i = 0; i < size; ++i) {
+        if (cells[i].digit == 0) {
+            index_out = i;
+            return true;
+        }
+    }
+    return false;
+}
+
 std::vector<u32> Sudoku::find_cells_by_candidates(u32 num_candidates, std::string& info) {
     std::vector<u32> result = {};
 
-    for (u32 i = 0; i < width * width; ++i) {
+    for (u32 i = 0; i < size; ++i) {
         if (cells[i].digit != 0) continue;
         u32 local_num_c = 0;
         for (u32 candidate : cells[i].candidates) {
@@ -365,36 +376,17 @@ void Solver::bruteforce_step(Sudoku& sudoku) {
     // random
 }
 
-u32 Solver::backtrack(Sudoku& sudoku, u32 start) {
-    for (Cell& cell : sudoku.cells) {
-        if (cell.no_candidates()) {
-            return false;
+u32 Solver::backtrack(Sudoku& sudoku) {
+    u32 index;
+    if (!sudoku.find_cell_empty(index)) return true;
+    //std::cout << "after checking empty cells\n";
+    for (u32 candidate = 1; candidate <= 9; candidate++) {
+        if (sudoku.set_cell(index, candidate)) {
+            if (backtrack(sudoku)) return true;
         }
+        sudoku.empty_cell(index);
     }
-    if (start == sudoku.size) { 
-        for (Cell& cell : sudoku.cells) {
-            if (cell.digit == 0) {
-                return false;
-            }
-        }
-        std::cout << "grid is completely filled\n";
-        return true;
-    }
-    // find empty squares
-    for (int i = start; i < sudoku.size; ++i) {
-        if (sudoku.cells[i].digit == 0) {
-            u32 candidate = 1;
-            for (u32 candidate_bit : sudoku.cells[i].candidates) {
-                if (candidate_bit) {
-                    if (!sudoku.set_cell(i, candidate)) assert(0);
-                    if (start == 0) std::cout << "set cell at i = " << i << "\n";
-                    if (backtrack(sudoku, i + 1)) return true;
-                    sudoku.empty_cell(i);
-                }
-                candidate++;
-            }
-        }
-    }
+    //std::cout << "after main loop\n";
     return false;
 }
 
