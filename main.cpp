@@ -23,7 +23,6 @@ void time_begin() {
 }
 void time_end() {
     delta = GetTime() - start;
-    std::cout << "took " << delta << "s\n";
 }
 bool is_selected(u32 x, u32 y) {
     return x == selected_cell.x && y == selected_cell.y;
@@ -65,10 +64,23 @@ void controls() {
     if (IsKeyReleased(KEY_O)) {
         sudoku.clear_cells();
     }
-    if (IsKeyReleased(KEY_R) && not_found) {
+    if (IsKeyReleased(KEY_SPACE)) {
+        Sudoku s = sudoku;
+        u32 solutions = sudoku_solver.one_candidate(s);
+        std::cout << "sudoku has " << solutions << " solutions\n";
+    }
+    if (IsKeyReleased(KEY_F) && not_found) {
+        std::cout << "fast ";
         time_begin();
         sudoku = Sudoku();
-        sudoku_solver.backtrack(sudoku);
+        sudoku_solver.backtrack_fast(sudoku);
+        time_end();
+    }
+    if (IsKeyReleased(KEY_S) && not_found) {
+        std::cout << "slow ";
+        time_begin();
+        sudoku = Sudoku();
+        sudoku_solver.backtrack_slow(sudoku);
         time_end();
     }
     Vector2 mouse_pos = GetMousePosition();
@@ -105,21 +117,7 @@ void controls() {
 int main() {
     SetRandomSeed(GetTime());
     InitWindow(window_width, window_height, window_title);
-
-    bool solution_found = false;
-    std::map<u32, Points> map;
-    map[2] = {{0, 0}};
-    map[4] = {{0, 0}};
-    map[3] = {{0, 0}};
-    map[0] = {{0, 0}};
-    for (auto keyval : map) {
-        std::cout << "cells with " << keyval.first << " candidates left\n"; 
-        for (auto point : keyval.second) {
-            u32 x = point.first;
-            u32 y = point.second;
-            std::cout << "x = " << x << ", y = " << y << "\n";
-        }
-    }
+    
     
     while (!WindowShouldClose()) {
         BeginDrawing();

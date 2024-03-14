@@ -16,6 +16,7 @@ enum group {
 struct Cell {	
     u32 digit = 0;
     u32 candidates[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+    u32 num_candidates();
     bool is_candidate(u32 candidate);
     bool no_candidates();
     void fill_candidates();
@@ -43,6 +44,7 @@ struct Sudoku {
     void empty_cell(u32 x, u32 y);
     void empty_cell(u32 index);
     void clear_cells();
+    void fill_upto(u32 max);
     // removes the digit as candidate for all affected cells after setting!
     bool set_cell(u32 x, u32 y, u32 digit);
     bool set_cell(u32 index, u32 digit);
@@ -64,6 +66,7 @@ struct Sudoku {
     bool is_valid();
     bool is_group_valid(u32* group);
     static int random(int max);
+    int get_cell_least_candidates();
 private:
     u32 random_start;
 };
@@ -71,7 +74,8 @@ private:
 struct Solver {
 public:
     Solver();
-    bool backtrack(Sudoku& sudoku);
+    bool backtrack_slow(Sudoku& sudoku);
+    bool backtrack_fast(Sudoku& sudoku);
     // return number of sulutions
     u32 one_candidate(Sudoku& sudoku);
 private:

@@ -18,7 +18,6 @@ void remove_elem(std::vector<T>& data, T elem) {
             return;
         }
     }
-    std::cout << "could not find element in the array!\n";
 }
 
 Sudoku::Sudoku() {
@@ -76,7 +75,6 @@ bool Sudoku::set_cell(u32 x, u32 y, u32 digit) {
     u32 index = INDEX_9x9(x, y);
     Cell* cell = &cells[index];
     if (!cell->is_candidate(digit)) {
-        //std::cout << "candidate " << digit << " is not a candidate for cell " << x << ", " << y << "\n";
         return false;
     }
     empty_cell(x, y);
@@ -130,6 +128,22 @@ void Sudoku::recompute_candidates(u32 x, u32 y,  u32 deleted_digit) {
 
 Cell Sudoku::get_cell(u32 x, u32 y) {
     return cells[INDEX_9x9(x, y)];
+}
+
+int Sudoku::get_cell_least_candidates() {
+    int least = width;
+    u32 index = -1;
+    u32 i = 0;
+    for (Cell& cell : cells) {
+        if (cell.digit) { i++; continue;}
+        int num_cand = cell.num_candidates();
+        if (num_cand <= least) {
+            least = num_cand;
+            index = i; 
+        }
+        i++;
+    }
+    return index;
 }
 
 void Sudoku::get_row_indeces(u32 row_index, u32* row) {
@@ -187,6 +201,14 @@ void Sudoku::get_block_digits(u32 x_block, u32 y_block, u32* block) {
     }
 }
 
+u32 Cell::num_candidates() {
+    u32 num = 0;
+    for (u32 candidate : candidates) {
+        if (candidate > 0) num++;
+    }
+    return num;
+}
+
 bool Cell::no_candidates() {
     for (u32 candidate_bit : candidates) {
         if (candidate_bit) return false;
@@ -207,6 +229,27 @@ void Cell::fill_candidates() {
 void Cell::clear_candidates() {
     for (u32& c : candidates) {
         c = 0;
+    }
+}
+
+void Sudoku::fill_upto(u32 num_cells) {
+    clear_cells();
+    u32 set_cells = 0;
+    while (set_cells < num_cells) {
+        u32 i = random(size);
+        if (cells[i].digit == 0) {
+            std::vector<u32> digits = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+            while (digits.size()) {
+                u32 index = random(digits.size() - 1);
+                u32 candidate = digits[index];
+                digits[index] = digits[digits.size() - 1];
+                digits.pop_back();
+                if (set_cell(i, candidate)) { 
+                    set_cells++;
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -235,9 +278,8 @@ std::vector<std::pair<u32, u32>> Sudoku::find_cells_one_candidate() {
 bool Sudoku::find_cell_empty(u32& index_out) {
     u32 empty_size = empty_cells.size();
     if (empty_size) {
-        u32 index = random_start;
-        if (index >= empty_size) index = 0;
-        index_out = empty_cells[index];
+        //u32 index = random_start % size;
+        index_out = empty_cells[0];
         return true;
     }
     return false;
@@ -359,12 +401,25 @@ Solver::Solver() {
     srand(std::time(NULL));
 }
 
-bool Solver::backtrack(Sudoku& sudoku) {
+bool Solver::backtrack_fast(Sudoku& sudoku) {
+    int index = sudoku.get_cell_least_candidates();
+    if (index < 0) {
+        return true;
+    }
+    for (u32 candidate = 1; candidate <= 9; candidate++) {
+        if (sudoku.set_cell(index, candidate)) {
+            if (backtrack_fast(sudoku)) return true;
+        }
+        sudoku.empty_cell(index);
+    }
+    return false;
+}
+bool Solver::backtrack_slow(Sudoku& sudoku) {
     u32 index;
     if (!sudoku.find_cell_empty(index)) return true;
     for (u32 candidate = 1; candidate <= 9; candidate++) {
         if (sudoku.set_cell(index, candidate)) {
-            if (backtrack(sudoku)) return true;
+            if (backtrack_slow(sudoku)) return true;
         }
         sudoku.empty_cell(index);
     }
@@ -372,14 +427,30 @@ bool Solver::backtrack(Sudoku& sudoku) {
 }
 
 u32 Solver::one_candidate(Sudoku& sudoku) {
-    if (sudoku.is_solved()) return true;
-    std::vector<std::pair<u32, u32>> one_candidate_cells = sudoku.find_cells_one_candidate();
-    if (one_candidate_cells.size() == 0) return false;
-
-    u32 index = one_candidate_cells[0].first;
-    u32 digit = one_candidate_cells[0].second;
-    if (!sudoku.set_cell(index, digit)) {
-        assert(0 && "could not set cell after calculating that you could set the cell :/\n");
+    if (sudoku.is_solved()) {
+        std::cout << "sudoku is solved!\n";
+        return 1;
     }
-    return one_candidate(sudoku);
+    std::vector<std::pair<u32, u32>> one_candidate_cells = sudoku.find_cells_one_candidate();
+    if (one_candidate_cells.size() == 0) {
+        std::cout << "no more candidates!\n";
+        return 0;
+    }
+    u32 num_sol = 0;
+    for (auto cell : one_candidate_cells) {
+        u32 index = cell.first;
+        u32 digit = cell.second;
+        if (!sudoku.set_cell(index, digit)) {
+            std::cout << "failed to set cell at index = " << index << " , all one candidate cells: \n";
+            for (auto p : one_candidate_cells) {
+                std::cout << "index = " << p.first << "\n";
+                std::cout << "candidate = " << p.second << "\n";
+            }
+            sudoku.print();
+            assert(0 && "could not set cell after calculating that you could set the cell :/\n");
+        }
+        num_sol += one_candidate(sudoku);
+        sudoku.empty_cell(index);
+    }
+    return num_sol;
 }
